@@ -4,15 +4,15 @@ import datetime
 
 OUIList =['00:0[bB]:86','00:1[aA]:1[eE]','00:24:6[cC]','04:[bB][dD]:88','18:64:72','20:4[cC]:03','24:[dD][eE]:[cC]6','40:[eE]3:[dD]6','6[cC]:[fF]3:7[fF]','70:3[aA]:0[eE]','84:[dD]4:7[eE]','94:[bB]4:0[fF]','9[cC]:1[cC]:12','[aA][cC]:[aA]3:1[eE]','[bB]4:5[dD]:50','[dD]8:[cC]7:[cC]8','[fF]0:5[cC]:19']
 date = datetime.datetime.now()
+
 filename = "/usr/local/cfg/{0}-{1}-{2}_WAP_lock.txt".format(date.year, date.month,date.day)
 f = open(filename,'w')
+
 showvlan = exsh.clicmd("sho fdb", True)
 mac_entry=re.findall(r'\b((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})\s*\S*\(.* (\d{1,2})',showvlan)
+
 for item in mac_entry:
-	#print item[0]
-	#print item[1]
 	powercommand = 'show inline-power info ports '+item[1]
-#	print powercommand
 	showpower = exsh.clicmd(powercommand,True)
 	inline_entry= re.search(r'delivering',showpower)
 	if inline_entry:
@@ -39,4 +39,3 @@ for item in mac_entry:
 		f.write("port "+ item[1]+" is not a WAP\n")
 f.close()
 exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False) 
-#print showvlan
