@@ -28,7 +28,7 @@ for item in mac_entry:
 		
 		if ouicheck:
 			edp_check= exsh.clicmd("show edp port "+item[1]+" detail",True)
-			found_edp_link= re.search('Link State:.*Active, (\d*\S*), (.*-duplex)',edp_check)
+			found_edp_link= re.search('Remote-System:',edp_check)
 			
 			if found_edp_link:
 				print "breaking because of edp"
@@ -45,6 +45,7 @@ for item in mac_entry:
 			#print lock_learning_command
 			lock_learning_string = exsh.clicmd(lock_learning_command, True)
 			locked_ports +=1
+			locked_port_list.append(item[1])
 			locked_port_list.append(item[1])
 			break
 			
@@ -64,5 +65,5 @@ while i<locked_ports:
 		
 f.close()
 exsh.clicmd("save")
-exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False)
-exsh.clicmd("rm "+filename,False)
+#exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False)
+#exsh.clicmd("rm "+filename,False)

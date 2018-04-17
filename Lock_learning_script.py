@@ -26,7 +26,8 @@ for item in mac_entry:
 		ouicheck = re.search(ouistring,item[0], re.IGNORECASE)
 		if ouicheck:
 			edp_check= exsh.clicmd("show edp port "+item[1]+" detail",True)
-			found_edp_link= re.search('Link State:.*Active, (\d*\S*), (.*-duplex)',edp_check)
+			#found_edp_link= re.search('Link State:.*Active, (\d*\S*), (.*-duplex)',edp_check)
+			found_edp_link= re.search('Remote-System:',edp_check)
 			if found_edp_link:
 				print "breaking because of edp"
 				break
@@ -61,5 +62,5 @@ while i<locked_ports:
 		
 f.close()
 exsh.clicmd("save",False)
-exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False)
-exsh.clicmd("rm "+filename,False)
+#exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False)
+#exsh.clicmd("rm "+filename,False)
