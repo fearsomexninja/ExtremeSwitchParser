@@ -14,7 +14,16 @@ filename = "/usr/local/cfg/{0}-{1}-{2}_WAP_unlock.txt".format(date.year, date.mo
 f = open(filename,'w')
 
 showvlan = exsh.clicmd("sho fdb", True)
-mac_entry=re.findall(r'\b((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})\s*\S*\(.* (\d{1,2})',showvlan)
+mac_entry=re.findall(r'\b((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}).*\(.* (\d{1,2}.*)',showvlan)
+
+while i < len(mac_entry):
+	edp_check= exsh.clicmd("show edp port "+mac_entry[i][1]+" detail",True)
+	#found_edp_link= re.search('Link State:.*Active, (\d*\S*), (.*-duplex)',edp_check)
+	found_edp_link= re.search('Remote-System:',edp_check)
+	if found_edp_link:
+		mac_entry.pop(i)
+	else:
+		i+=1
 
 for item in mac_entry:
 #	powercommand = 'show inline-power info ports '+item[1]

@@ -48,5 +48,5 @@ for item in mac_entry:
 		print "port "+ item[1]+" is not a WAP"
 		#f.write("port "+ item[1]+" is not a WAP\n")
 f.close()
-exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False) 
-exsh.clicmd("rm "+filename,False)
+#exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False) 
+#exsh.clicmd("rm "+filename,False)

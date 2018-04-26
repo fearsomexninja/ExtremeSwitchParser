@@ -5,6 +5,8 @@ import datetime
 #port speeds && duplex
 locked_ports=0
 locked_port_list=[]
+prelocked_ports=0
+prelocked_port_list=[]
 
 OUIList =['00:0[bB]:86','00:1[aA]:1[eE]','00:24:6[cC]','04:[bB][dD]:88','18:64:72','20:4[cC]:03','24:[dD][eE]:[cC]6','40:[eE]3:[dD]6','6[cC]:[fF]3:7[fF]','70:3[aA]:0[eE]','84:[dD]4:7[eE]','94:[bB]4:0[fF]','9[cC]:1[cC]:12','[aA][cC]:[aA]3:1[eE]','[bB]4:5[dD]:50','[dD]8:[cC]7:[cC]8','[fF]0:5[cC]:19']
 date = datetime.datetime.now()
@@ -13,7 +15,33 @@ filename = "/usr/local/cfg/{0}-{1}-{2}_WAP_lock.txt".format(date.year, date.mont
 f = open(filename,'w')
 
 showvlan = exsh.clicmd("sho fdb", True)
-mac_entry=re.findall(r'\b((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})\s*\S*\(.* (\d{1,2})',showvlan)
+mac_entry=re.findall(r'((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}).*\(.* (\d{1,2}.*)',showvlan)
+
+locked_macs = re.findall(r'((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}).*\(.*spm.* \d{1,2}.*',showvlan)
+prelocked_ports = len(locked_macs)
+
+if prelocked_ports >0:
+	print "These ports were already locked:"
+	for item in locked_macs:
+		i=0
+		while i<len(mac_entry):
+			if mac_entry[i][0] == item:
+				prelocked_port_list.append(mac_entry[i][1])
+				print mac_entry[i][1]
+				mac_entry.pop(i)
+				break
+			i += 1
+	print "\n"
+i = 0
+while i < len(mac_entry):
+	edp_check= exsh.clicmd("show edp port "+mac_entry[i][1]+" detail",True)
+	#found_edp_link= re.search('Link State:.*Active, (\d*\S*), (.*-duplex)',edp_check)
+	found_edp_link= re.search('Remote-System:',edp_check)
+	if found_edp_link:
+		mac_entry.pop(i)
+	else:
+		i+=1
+	#print "breaking because of edp"
 
 for item in mac_entry:
 #	powercommand = 'show inline-power info ports '+item[1]
@@ -59,7 +87,12 @@ f.write("these {0} ports were locked:\n".format(locked_ports))
 while i<locked_ports:
 	f.write(locked_port_list[i]+",")
 	i+=1
-		
+f.write("these {0} ports were already locked:\n".format(prelocked_ports))
+i = 0
+while i<prelocked_ports:
+	f.write(prelocked_port_list[i]+",")
+	i+=1
+	
 f.close()
 exsh.clicmd("save",False)
 #exsh.clicmd("tftp put 172.16.1.8 vr vr-def "+filename,False)
