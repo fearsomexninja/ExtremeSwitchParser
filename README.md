@@ -18,3 +18,7 @@ This script is an extension of AP_doc_gen.py; it parses the FDB to generate a li
 ## Unlock_learning_script.py 
 
 Similar to the previous script, this script unlocks MAC learning on all ports with an Aruba wireless access point attached, so that the port can be used with another device, generating a logfile to be sent to a TFTP server.
+
+## unused_ports_to_csv.py
+
+This script generates a csv file listing each inactive port on the switch, along with the port description and the length of time each port has been inactive, and sends the csv file to a TFTP server. A command line argument of "1" adds currently active ports to the csv as well.
