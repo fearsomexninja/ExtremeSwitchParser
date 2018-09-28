@@ -23,6 +23,10 @@ if len(sys.argv) >= 2 and sys.argv[1] == "1":
 PORT_INF_DET = "<show_ports_info_detail>"
 PORT_INF_DET_CLOSE = "</show_ports_info_detail>"
 
+# change for different tftp servers
+TFTP_IP = "172.16.1.32"
+VIR_ROUTER = "VR-Default"
+
 DATE = datetime.now()
 
 FILENAME = "/usr/local/cfg/{0}-{1}-{2}_unused_ports.csv".format(DATE.year, \
@@ -30,6 +34,10 @@ FILENAME = "/usr/local/cfg/{0}-{1}-{2}_unused_ports.csv".format(DATE.year, \
                                                                 DATE.day)
 
 def get_switch_start_dates():
+    """
+    Returns an array of strings containing the initial start date of each
+    switch in the stack
+    """
     raw_out = exsh.clicmd("sho odometers", capture=True, xml=False)
     #odo_info = re.findall('[a-zA-z]{3}-\d+-\d+', raw_out)
     odo_info = re.findall('Switch.*', raw_out)
@@ -63,14 +71,15 @@ def get_unused_ports():
             end += len(PORT_INF_DET_CLOSE)
             port_info = portinfo_xml[start:end]
 
-            #extract port info
+            # extract port info
             xmlextract = port_info[:end]
             tree = ET.fromstring(xmlextract)
 
             link_state = 0
             time_last_down = 0
             display_string = ""
-            
+
+            # find relevant port info
             for elem in tree.iter():
                 if 'linkState' == elem.tag:
                     link_state = int(elem.text)
@@ -79,6 +88,7 @@ def get_unused_ports():
                 if 'displayString' == elem.tag:
                     display_string = elem.text
 
+            # if down, report downtime
             if link_state == 1:
                 if SHOW_WORKING_PORTS:
                     col1 = "{0}:{1}".format(slot_num_fmt, port_num_fmt)
@@ -89,18 +99,25 @@ def get_unused_ports():
             else:
                 time_last_down = datetime.fromtimestamp(time_last_down)
                 time_diff = DATE - time_last_down
-                time_diff_str = str(time_diff.days) + " days " + \
-                                str(time_diff.seconds / 3600) + " hours " + \
-                                str(time_diff.seconds % 3600 / 60) + " minutes"
-                col1 = "{0}:{1}".format(slot_num_fmt, port_num_fmt)
+                time_diff_str = (str(time_diff.days) + " days " + 
+                                 str(time_diff.seconds / 3600) + " hours " + 
+                                 str(time_diff.seconds % 3600 / 60) + " minutes"
+                col1 = "{0}:{1}".format(slot_num_fmt, port_num_fmt))
                 csv_writer.writerow([col1, display_string, time_diff_str])
-            #strip off the first XML transaction from group and continue
+
+            # strip off the first XML transaction from group and continue
             portinfo_xml = portinfo_xml[end:]
             port_num += 1
 
     csv_file.close()
     exsh.clicmd("save")
-    exsh.clicmd("tftp put 172.16.1.32 vr vr-def " + FILENAME, False)
-    exsh.clicmd("rm " + FILENAME, False)
+
+    # if file can't be sent, leave on switch
+    try:
+        cmd = exsh.clicmd("tftp put {0} vr {1} ".format(
+                           TFTP_IP, VIR_ROUTER) + FILENAME, False)
+        exsh.clicmd("rm " + FILENAME, False)
+    except RuntimeError:
+        print("Failed to send file to TFTP server.")
 
 get_unused_ports()
